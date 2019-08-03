@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Sign in &laquo; Admin</title>
+  <link rel="stylesheet" href="/public/assets/vendors/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/public/assets/css/admin.css">
+</head>
+<body>
+  <div class="login">
+    <form id="loginFormId" class="login-wrap">
+      <img class="avatar" src="/public/assets/img/default.png">
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong> 用户名或密码错误！
+      </div> -->
+      <div class="form-group">
+        <label for="email" class="sr-only">邮箱</label>
+        <input id="email" name="admin_email" type="email" class="form-control" placeholder="邮箱" autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password" class="sr-only">密码</label>
+        <input id="password" name="admin_pwd" type="password" class="form-control" placeholder="密码">
+      </div>
+      <a class="btn btn-primary btn-block" href="javascript:login()">登 录</a>
+    </form>
+  </div>
+  <script src="/public/assets/vendors/jquery/jquery.js"></script>
+  <script src="/public/assets/vendors/nprogress/nprogress.js"></script>
+  <script>
+    function login(){
+      const params = $("#loginFormId").serialize()
+      
+      $.post('/api/users/login',params,result => {
+        if (!result.success){
+          alert(result.message)
+        } else {
+          location.href = '/admin'
+        }
+      })
+    }
+  </script>
+</body>
+</html>
