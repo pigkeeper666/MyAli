@@ -48,10 +48,11 @@
       </tr>
     </thead>
     <tbody>
+      {{ each posts }}
       <tr>
         <td class="text-center"><input type="checkbox" /></td>
-        <td>随便一个名称</td>
-        <td>小小</td>
+        <td>{{ $value.article_title }}</td>
+        <td>{{ $value.article_title }}</td>
         <td>潮科技</td>
         <td class="text-center">2016/10/07</td>
         <td class="text-center">已发布</td>
@@ -60,30 +61,7 @@
           <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
         </td>
       </tr>
-      <tr>
-        <td class="text-center"><input type="checkbox" /></td>
-        <td>随便一个名称</td>
-        <td>小小</td>
-        <td>潮科技</td>
-        <td class="text-center">2016/10/07</td>
-        <td class="text-center">已发布</td>
-        <td class="text-center">
-          <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-          <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-        </td>
-      </tr>
-      <tr>
-        <td class="text-center"><input type="checkbox" /></td>
-        <td>随便一个名称</td>
-        <td>小小</td>
-        <td>潮科技</td>
-        <td class="text-center">2016/10/07</td>
-        <td class="text-center">已发布</td>
-        <td class="text-center">
-          <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-          <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-        </td>
-      </tr>
+     {{ /each }}
     </tbody>
   </table>
 </div>

@@ -109,80 +109,37 @@
 
 {{block 'script'}}
 <!-- <script src="/public/assets/vendors/art-template/template-web.js"></script> -->
-<script id="categoriesId" type="text/html">
-  {%each categories %}
-    <tr>
-      <td class="text-center" width="40"><input type="checkbox"></td>
-      <td>{% $value.cate_name %}</td>
-      <td>{% $value.cate_slug %}</td>
-      <td class="text-center" width="100">
-        <!-- html方式，弹出对话框，不写js代码的方式 -->
-        <!-- <a name="edit" data-toggle="modal" data-target="#exampleModal" data-id="{% $value.cate_id %}" href="#">编辑</a>&nbsp; -->
-        <a name="edit" data-id="{% $value.cate_id %}" href="#">编辑</a>&nbsp;
-        <a name="delete" data-id="{% $value.cate_id %}" href="#">删除</a>
-      </td>
-    </tr>
+<!-- 模板字符串 -->
+<script type="text/html" id="list_template">
+  {%each listData%}
+  <tr>
+    <td class="text-center"><input type="checkbox"></td>
+    <td>{% $value.cate_name %}</td>
+    <td>{% $value.cate_slug %}</td>
+    <td class="text-center">
+      <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
+      <a data-id="{% $value.cate_id %}" name="delete" href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+    </td>
+  </tr>
   {%/each%}
 </script>
 
-<script id="editCateTemplate" type="text/html">
-  <div class="form-group">
-    <label for="recipient-name" class="control-label">名称:</label>
-    <input type="text" id="cateNameId" name="cate_name" value="{% cate.cate_name %}" class="form-control" id="recipient-name">
-  </div>
-  <div class="form-group">
-    <label for="message-text" class="control-label">别名:</label>
-    <textarea id="cateSlugId" class="form-control" name="cate_slug">{% cate.cate_slug %}</textarea>
-  </div>
-  <input type="hidden" id="cateId" value="{% cate.cate_id %}">
-</script>
+<!-- <script type="text/html" id="list_template">
+  {{each listData}}
+  <tr>
+    <td class="text-center"><input type="checkbox"></td>
+    <td>{{ $value.cate_name }}</td>
+    <td>{{ $value.cate_slug }}</td>
+    <td class="text-center">
+      <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
+      <a data-id="{{ $value.cate_id }}" name="delete" href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+    </td>
+  </tr>
+  {{/each}}
+</script> -->
+
 
 <script>
-  // 通过事件代理/委托，给删除按钮添加点击事件
-  $('#list_container').on('click', 'a[name=delete]', function() {
-    if (!window.confirm('确定删除吗?')) return false
-    // 获取要删除的id
-    const cate_id = $(this).data('id')
-
-    // 发送请求给后台
-    $.ajax({
-      url: '/api/categories/delete',
-      data: {
-        id: cate_id
-      },
-      dataType: 'json',
-      success: function(result) {
-        if (result.success) {
-          loadList()
-        }
-      }
-    })
-
-    return false
-  })
-
-  // 编辑
-  $('#list_container').on('click', 'a[name=edit]', function(e) {
-    // 阻止默认行为
-    e.preventDefault()
-
-    // 弹出模态窗
-    $('#editCateModalId').modal()
-
-    // 发送请求获取数据
-    $.ajax({
-      url: '/api/categories/query',
-      data: {
-        id: $(this).data('id')
-      },
-      success: function(result) {
-        const htmlStr = template('editCateTemplate', { cate: result.data })
-
-        $('#edit-form').html(htmlStr)
-      }
-    })
-  })
-
   loadList()
 
   function loadList() {
@@ -190,96 +147,33 @@
       url: '/api/categories',
       dataType: 'json',
       success: function(result) {
-        // 调用template方法生成html代码片段
-        var htmlStr = template('categoriesId', { categories: result.data })
-        // 渲染
-        $('#list_container').html(htmlStr)
+        if(result.success){
+          // 调用template方法生成html代码片段
+          var htmlStr = template('list_template', { 
+           listData: result.ret 
+          })
+          // 渲染
+           $('#list_container').html(htmlStr)
+         }
+      },
+      error:function(err){
+        console.log('请求失败！！！')
       }
     })
   }
 
-  // 添加分类
-  $('#add_btn').click(function(e) {
-    // 阻止默认的表单提交行为
-    e.preventDefault()
-
-    // 获取要提交给后台的数据
-    const data = $('#add_form_id').serialize()
-
-    // 发送ajax请求
-    $.ajax({
-      url: '/api/categories/add',
-      method: 'POST',
-      data,
-      success: function(result) {
-        if (result.success) {
-          // 重新加载数据
-          loadList()
-
-          // 清空内容
-          $('input[name]').val('')
-        }
-      }
-    })
-  })
-
-  // 修改分类
-  $('#edit-form').validate({
-    rules: {
-      cate_name: {
-        required: true
-      },
-      cate_slug: {
-        required: true
-      }
-    },
-    submitHandler: function() {
-      $.ajax({
-        url: `/api/categories/update?id=${$('#cateId').val()}`,
-        method: 'PUT',
-        data: {
-          cate_name: $('#cateNameId').val(),
-          cate_slug: $('#cateSlugId').val()
-        },
-        success: function(result) {
-          if (result.success) {
-            // 刷新表格
-            loadList()
-
-            // 关闭对话框
-            $('#editCateModalId').modal('hide')
-          }
-        }
-      })
-    }
-  })
-
-  $('#editId').on('click', function() {
-    $('#edit-form').submit()
-  })
-
-  /**
-  $('#editCateModalId').on('click', 'button[id=editId]', function(e) {
-    e.preventDefault()
-
-    $.ajax({
-      url: `/api/categories/update?id=${$('#cateId').val()}`,
-      method: 'PUT',
-      data: {
-        cate_name: $('#cateNameId').val(),
-        cate_slug: $('#cateSlugId').val()
-      },
-      success: function(result) {
-        if (result.success) {
-          // 刷新表格
-          loadList()
-
-          // 关闭对话框
-          $('#editCateModalId').modal('hide')
-        }
-      }
-    })
-  })
-  **/
 </script>
+<script>
+  // template('script 节点 id')
+  // 当前页面是由服务端渲染出来的
+  // 服务端先先对当前页面进行模板引擎处理
+  // 服务端处理的时候根本不关心你的内容，只关心模板语法，我要解析替换
+  // 当你的服务端模板引擎语法和客户端模板引擎语法一样的时候，就会产生冲突
+  //    服务端会把客户端的模板字符串页给解析掉
+  //    这就是所谓的前后端模板语法冲突
+  
+
+  template.defaults.rules[1].test = /{%([@#]?)[ \t]*(\/?)([\w\W]*?)[ \t]*%}/;
+</script>
+
 {{/block}}
