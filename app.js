@@ -3,6 +3,7 @@ const path = require('path')
 const router = require(path.join(__dirname,"routers/index.js"))
 const adminRouter = require(path.join(__dirname,"routers/admin.js"))
 const apiRouter = require(path.join(__dirname,"routers/api.js"))
+const bodyParser = require('body-parser')
 const app = express()
 
 
@@ -15,6 +16,12 @@ app.set('views', path.join(__dirname, 'views'))
 
 // express-art-template 内部依赖了 art-template
 app.engine('html', require('express-art-template'))
+
+// 配置body-parser parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// 配置body-parser parse application/json
+app.use(bodyParser.json())
 
 app.use(router)
 app.use(adminRouter)

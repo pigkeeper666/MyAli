@@ -14,7 +14,7 @@
   </div> -->
   <div class="row">
     <div class="col-md-4">
-      <form id="add_form_id">
+      <form id="add_form">
         <h2>添加新分类目录</h2>
         <div class="form-group">
           <label for="name">名称</label>
@@ -40,7 +40,7 @@
           </p>
         </div>
         <div class="form-group">
-          <button class="btn btn-primary" id="add_btn" type="submit">
+          <button class="btn btn-primary" id="add_btn"  type="submit">
             添加
           </button>
         </div>
@@ -141,7 +141,7 @@
 
 <script>
   loadList()
-
+// 加载列表
   function loadList() {
     $.ajax({
       url: '/api/categories',
@@ -162,6 +162,72 @@
     })
   }
 
+// 删除分类
+  // JQuery事件委托实现删除
+  // 当你点击删除按钮时，添加事件
+  $('#list_container').on('click','a[name=delete]',handleDelete)
+
+  function handleDelete(){
+    //如果点了否，则不删除
+    if(!window.confirm('确定删除吗？')){
+      return
+    }
+    // data-* 用法
+    var id = $(this).data('id')
+
+    //如果点了确定，则发送Ajax请求，进行删除
+    $.ajax({
+      url:'/api/categories/delete',
+      method:'GET',
+      data:{
+        id:id
+      },
+      dataType:'json',
+      success:function(result){
+        if(result.success){
+          //如果删除成功，则重新渲染页面
+          loadList()
+        }
+      },
+      error:function(err){
+        console.log('错误',err)
+      }
+    })
+  }
+
+  // 添加分类
+  $('#add_form').on('submit',handleAdd)
+
+function handleAdd(){
+  // serialize 会找到表单中所有的带有 name 的表单元素，提取对应的值，拼接成 key=value&key=value... 的格式数据
+  var formData = $('#add_form').serialize()
+
+  $.ajax({
+    url:'api/categories/create',
+    method:'POST',
+    data:formData,
+    // Content-Type 为 application/x-www-form-urlencoded
+    // data: { // data 为对象只是为了让你写起来方便，最终在发送给服务器的时候，$.ajax 还会把对象转换为 key=value&key=value... 的数据格式
+    // 普通的表单 POST 提交（没有文件），必须提交格式为 key=value&key=value... 数据，放到请求体中
+    //   key: value,
+    //   key2: value2
+    // },
+    dataType:'json',
+    success: function (result) {
+      // 重新渲染列表
+      if(result.success){
+        loadList()
+      }
+      // 清空表单
+      $('#add_form').find('input[name]').val('')
+    },
+    error: function (error) {
+      console.log(error)
+    }
+  })
+  return false
+}
+
 </script>
 <script>
   // template('script 节点 id')
@@ -171,8 +237,6 @@
   // 当你的服务端模板引擎语法和客户端模板引擎语法一样的时候，就会产生冲突
   //    服务端会把客户端的模板字符串页给解析掉
   //    这就是所谓的前后端模板语法冲突
-  
-
   template.defaults.rules[1].test = /{%([@#]?)[ \t]*(\/?)([\w\W]*?)[ \t]*%}/;
 </script>
 
