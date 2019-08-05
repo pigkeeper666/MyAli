@@ -91,13 +91,13 @@
           <h4 class="modal-title" id="exampleModalLabel">修改分类</h4>
         </div>
         <div class="modal-body">
-          <form id="edit-form"></form>
+          <form id="edit-form"> </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">
             关闭
           </button>
-          <button type="button" id="editId" class="btn btn-primary">
+          <button type="submit" id="editId" class="btn btn-primary">
             修改
           </button>
         </div>
@@ -117,26 +117,40 @@
     <td>{% $value.cate_name %}</td>
     <td>{% $value.cate_slug %}</td>
     <td class="text-center">
-      <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
+      <!-- 当点击该链接的时候，就会弹出模态框 -->
+      <a href="javascript:;" data-id="{% $value.cate_id %}"  name="edit" class="btn btn-info btn-xs">编辑</a>
       <a data-id="{% $value.cate_id %}" name="delete" href="javascript:;" class="btn btn-danger btn-xs">删除</a>
     </td>
   </tr>
   {%/each%}
 </script>
 
-<!-- <script type="text/html" id="list_template">
-  {{each listData}}
-  <tr>
-    <td class="text-center"><input type="checkbox"></td>
-    <td>{{ $value.cate_name }}</td>
-    <td>{{ $value.cate_slug }}</td>
-    <td class="text-center">
-      <a href="javascript:;" class="btn btn-info btn-xs">编辑</a>
-      <a data-id="{{ $value.cate_id }}" name="delete" href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-    </td>
-  </tr>
-  {{/each}}
-</script> -->
+<!-- 模板字符串 -->
+<script type='text/html' id='modal_template'>
+  {% each data %}
+  <div class="form-group">
+      <!-- 表单隐藏域 -->
+      <input type="hidden" name="cate_id" value="{% $value.cate_id %}">
+      <label for="name">名称</label>
+      <input
+        class="form-control"
+        name="cate_name"
+        type="text"
+        placeholder="分类名称"
+        value="{% $value.cate_name %}"
+      />
+    </div>
+    <div class="form-group">
+      <label for="slug">别名</label>
+      <input
+        class="form-control"
+        name="cate_slug"
+        type="text"
+        placeholder="slug"
+        value="{% $value.cate_slug %}"
+      />
+      {% /each %}
+</script>
 
 
 <script>
@@ -164,7 +178,7 @@
 
 // 删除分类
   // JQuery事件委托实现删除
-  // 当你点击删除按钮时，添加事件
+  // 当你点击删除链接时，添加事件
   $('#list_container').on('click','a[name=delete]',handleDelete)
 
   function handleDelete(){
@@ -227,6 +241,58 @@ function handleAdd(){
   })
   return false
 }
+
+  //编辑分类之弹出模态框渲染原始数据
+  $('#list_container').on('click','a[name=edit]',handleEditRender)
+  // 首先要先请求服务器把这个信息传回来
+  function handleEditRender(){
+    var id = $(this).data('id')
+    $.ajax({
+      url:'api/categories/getSingleData',
+      method:'GET',
+      data:{
+        id:id
+        },
+      dataType:'json',
+      success:function(result){
+        if(result.success){
+        var htmlStr = template('modal_template',{
+          data:result.ret
+        })
+        $('#edit-form').html(htmlStr)
+        // 显示模态框
+        $('#editCateModalId').modal('show')
+      }
+      }
+    })
+  }
+
+  //编辑分类之提交模态框的表单
+  // 本来的思路是按钮在表单里，只要监听submit事件，然后将提交的字符串进行处理即可
+  // 现在由于按钮在表单里，故监听click事件即可
+  $('#editId').on('click',handleSubmit)
+
+  function handleSubmit(){
+    var formData = $('#edit-form').serialize()
+    $.ajax({
+      url:'api/categories/update',
+      method:'POST',
+      data:formData,
+      dataType:'json',
+      success:function(result){
+        if(result.success)
+          //重新渲染列表
+          $('#editCateModalId').modal('hide')
+          loadList()
+         
+      },
+      error:function(err){
+        console.log('出错啦')
+      }
+    })
+    
+  }
+
 
 </script>
 <script>

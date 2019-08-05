@@ -517,3 +517,292 @@ router.get('xxx', (req, res, next) => {
    
       
 
+### 编辑分类
+
+这个功能稍微有点难
+
+想要实现的功能是：点击了列表中的`编辑`按钮后，跳出一个`模态框`，其中也有一个表单，修改完毕后，重新渲染列表。所有的都使用ajax方式
+
+首先来讲一下`模态框`
+
+> 模态框就是一个弹出窗口
+>
+> ## 方法
+>
+> 下面是一些可与 modal() 一起使用的有用的方法。
+>
+> | 方法                         | 描述                                           | 实例                                          |
+> | :--------------------------- | :--------------------------------------------- | :-------------------------------------------- |
+> | **Options:** .modal(options) | 把内容作为模态框激活。接受一个可选的选项对象。 | `$('#identifier').modal({ keyboard: false })` |
+> | **Toggle:** .modal('toggle') | 手动切换模态框。                               | `$('#identifier').modal('toggle')`            |
+> | **Show:** .modal('show')     | 手动打开模态框。                               | `$('#identifier').modal('show')`              |
+> | **Hide:** .modal('hide')     | 手动隐藏模态框。                               | `$('#identifier').modal('hide')`              |
+
+接下来正式开始
+
+1. 点击`编辑`按钮，弹出`模态框` 
+
+   在html中，我们需要编辑模态框的结构。里面需要有一个表单。
+
+   ```html
+    <!-- 修改模态框 -->
+     <div
+       class="modal fade"
+       id="editCateModalId"
+       tabindex="-1"
+       role="dialog"
+       aria-labelledby="exampleModalLabel"
+     >
+       <div class="modal-dialog" role="document">
+         <div class="modal-content">
+           <div class="modal-header">
+             <button
+               type="button"
+               class="close"
+               data-dismiss="modal"
+               aria-label="Close"
+             >
+               <span aria-hidden="true">&times;</span>
+             </button>
+             <h4 class="modal-title" id="exampleModalLabel">修改分类</h4>
+           </div>
+           <div class="modal-body">
+             <form id="edit-form"> </form>
+           </div>
+           <div class="modal-footer">
+             <button type="button" class="btn btn-default" data-dismiss="modal">
+               关闭
+             </button>
+             <button type="submit" id="editId" class="btn btn-primary">
+               修改
+             </button>
+           </div>
+         </div>
+       </div>
+     </div>
+   ```
+
+注意，其中有一个`form`表单标签，这是用于渲染待修改的数据的，也就是说这里会用模板引擎渲染
+
+2. 当点击`修改`按钮的时候，发送ajax请求，请求原数据(通过id来索引)
+
+   ```javascript
+     //编辑分类之弹出模态框渲染原始数据
+     $('#list_container').on('click','a[name=edit]',handleEditRender)
+     // 首先要先请求服务器把这个信息传回来
+     function handleEditRender(){
+         //data-*
+       var id = $(this).data('id')
+       $.ajax({
+         url:'api/categories/getSingleData',
+         method:'GET',
+         data:{
+           id:id
+           },
+         dataType:'json',
+         success:function(result){
+          // 利用模板引擎和模板字符串渲染页面
+         }
+       })
+     }
+   ```
+
+   编辑模板字符串
+
+   ```html
+   <!-- 模板字符串 -->
+   <script type='text/html' id='modal_template'>
+     {% each data %}
+     <div class="form-group">
+         <!-- 表单隐藏域 -->
+         <input type="hidden" name="cate_id" value="{% $value.cate_id %}">
+         <label for="name">名称</label>
+         <input
+           class="form-control"
+           name="cate_name"
+           type="text"
+           placeholder="分类名称"
+           value="{% $value.cate_name %}"
+         />
+       </div>
+       <div class="form-group">
+         <label for="slug">别名</label>
+         <input
+           class="form-control"
+           name="cate_slug"
+           type="text"
+           placeholder="slug"
+           value="{% $value.cate_slug %}"
+         />
+         {% /each %}
+   </script>
+   ```
+
+
+
+2. 服务端响应（通过id索引）
+
+   ```javascript
+   router.get('/api/categories/getSingleData',(req,res,next)=>{
+       const {id} = req.query
+       pool.query('SELECT * FROM `ali_cate` WHERE `cate_id` =?',[id],(err,ret)=>{
+           if(err){
+               return next(err)
+           }
+           res.send({
+               success:true,
+               ret
+           })
+       })
+   })
+   ```
+
+   
+
+3. 客户端收到服务端响应，完善回调
+
+   ```javascript
+     //编辑分类之弹出模态框渲染原始数据
+     $('#list_container').on('click','a[name=edit]',handleEditRender)
+     // 首先要先请求服务器把这个信息传回来
+     function handleEditRender(){
+       var id = $(this).data('id')
+       $.ajax({
+         url:'api/categories/getSingleData',
+         method:'GET',
+         data:{
+           id:id
+           },
+         dataType:'json',
+         success:function(result){
+           if(result.success){
+           var htmlStr = template('modal_template',{
+             data:result.ret
+           })
+           $('#edit-form').html(htmlStr)
+           // 显示模态框
+           $('#editCateModalId').modal('show')
+         }
+         }
+       })
+     }
+   ```
+
+   至此，点击`修改`，弹出的模态框已经有了原始数据。接下来我们将修改数据，点击`修改`按钮，进行表单提交
+
+   
+
+4. 注册表单的提交事件
+
+   观察模态框的结构，提交按钮并不在表单里面
+
+   正常情况下，按钮在表单里，只要监听`submit()`方法即可
+
+   但是现在按钮在外面，故只要监听`click()`方法
+
+   本质上我们并不是想要submit，我们只是想要submit的数据
+
+   ```javascript
+   //编辑分类之提交模态框的表单
+     // 本来的思路是按钮在表单里，只要监听submit事件，然后将提交的字符串进行处理即可
+     // 现在由于按钮在表单里，故监听click事件即可
+     $('#editId').on('click',handleSubmit)
+   
+     function handleSubmit(){
+         // 获取表单数据
+       var formData = $('#edit-form').serialize()
+     }
+   ```
+
+   
+
+5. 发送 Ajax `POST`请求 `/api/categories/update`
+
+   ```javascript
+   //编辑分类之提交模态框的表单
+     // 本来的思路是按钮在表单里，只要监听submit事件，然后将提交的字符串进行处理即可
+     // 现在由于按钮在表单里，故监听click事件即可
+     $('#editId').on('click',handleSubmit)
+   
+     function handleSubmit(){
+       var formData = $('#edit-form').serialize()
+       $.ajax({
+         url:'api/categories/update',
+         method:'POST',
+         data:formData,
+         dataType:'json',
+         success:function(result){
+           if(result.success)
+             //关闭模态框
+             //重新渲染列表     
+         },
+         error:function(err){
+           // 错误处理
+         }
+       })
+       
+     }
+   ```
+
+   + 注意：发回去的`formData`，事实上有3个，一个是用于索引的id，剩下两个是修改的值。
+   + 这里就用到了`表单隐藏域`的概念，因为服务器需要一个索引去查找数据，所以表单里得有个索引一同发送过去
+
+   在模板字符串中有：
+
+   ```html
+    <!-- 表单隐藏域 -->
+         <input type="hidden" name="cate_id" value="{% $value.cate_id %}">
+   ```
+
+   这个做法可以把`cate_id`传过去，同时，用户也看不到这个输入框
+
+   
+
+6. 服务器收到请求，并处理
+
+   ```javascript
+   router.post('/api/categories/update',(req,res,next)=>{
+       var body = req.body
+       pool.query('UPDATE `ali_cate` SET `cate_name` =? ,`cate_slug`=? WHERE `cate_id`=?',
+       [body.cate_name,body.cate_slug,body.cate_id],
+       (err,ret)=>{
+           if(err){
+               return next(err)
+           }
+           res.status(200).json({
+               success:true
+           })
+       })
+   })
+   ```
+
+   
+
+7. 客户端收到服务器响应，完善回调
+
+   ```javascript
+     //编辑分类之提交模态框的表单
+     $('#editId').on('click',handleSubmit)
+   
+     function handleSubmit(){
+       var formData = $('#edit-form').serialize()
+       $.ajax({
+         url:'api/categories/update',
+         method:'POST',
+         data:formData,
+         dataType:'json',
+         success:function(result){
+           if(result.success)
+             //先关闭模态框，再重新渲染列表
+             $('#editCateModalId').modal('hide')
+             loadList()
+         },
+         error:function(err){
+           console.log('出错啦')
+         }
+       })
+     }
+   ```
+
+   
+

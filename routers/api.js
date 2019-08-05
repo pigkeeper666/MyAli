@@ -22,6 +22,7 @@ router.get('/api/categories',(req,res,next)=>{
 
 router.get('/api/categories/delete',(req,res,next)=>{
     const {id} = req.query
+    console.log(id)
     //防止sql注入
     pool.query('DELETE FROM `ali_cate` WHERE `cate_id`=?',[id],(err,ret)=>{
         if(err){
@@ -44,6 +45,34 @@ router.post('/api/categories/create',(req,res,next)=>{
            return next(err)
         }
         // 发送响应 状态码200表示成功
+        res.status(200).json({
+            success:true
+        })
+    })
+})
+
+router.get('/api/categories/getSingleData',(req,res,next)=>{
+    const {id} = req.query
+    pool.query('SELECT * FROM `ali_cate` WHERE `cate_id` =?',[id],(err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        
+        res.send({
+            success:true,
+            ret
+        })
+    })
+})
+
+router.post('/api/categories/update',(req,res,next)=>{
+    var body = req.body
+    pool.query('UPDATE `ali_cate` SET `cate_name` =? ,`cate_slug`=? WHERE `cate_id`=?',
+    [body.cate_name,body.cate_slug,body.cate_id],
+    (err,ret)=>{
+        if(err){
+            return next(err)
+        }
         res.status(200).json({
             success:true
         })
