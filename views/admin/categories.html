@@ -158,6 +158,7 @@
 // 加载列表
   function loadList() {
     $.ajax({
+      // 注意api前面要加/
       url: '/api/categories',
       dataType: 'json',
       success: function(result) {
@@ -217,7 +218,8 @@ function handleAdd(){
   var formData = $('#add_form').serialize()
 
   $.ajax({
-    url:'api/categories/create',
+    // 注意api前面的/
+    url:'/api/categories/create',
     method:'POST',
     data:formData,
     // Content-Type 为 application/x-www-form-urlencoded
@@ -248,7 +250,7 @@ function handleAdd(){
   function handleEditRender(){
     var id = $(this).data('id')
     $.ajax({
-      url:'api/categories/getSingleData',
+      url:'/api/categories/getSingleData',
       method:'GET',
       data:{
         id:id
@@ -275,7 +277,7 @@ function handleAdd(){
   function handleSubmit(){
     var formData = $('#edit-form').serialize()
     $.ajax({
-      url:'api/categories/update',
+      url:'/api/categories/update',
       method:'POST',
       data:formData,
       dataType:'json',

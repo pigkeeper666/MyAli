@@ -3,10 +3,12 @@ const router = express.Router()
 const pool = require('../utils/db.js')
 
 router.get('/admin/categories',(req,res,next) =>{
-    console.log('收到')
     return res.render('admin/categories.html')
 })
 
+router.get('/admin/users',(req,res,next) =>{
+    return res.render('admin/users.html')
+})
 
 
 module.exports = router

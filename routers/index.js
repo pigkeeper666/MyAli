@@ -8,8 +8,8 @@ router.get('/',(req,res,next) => {
         // 调用 next，传递 err 错误对象
          return next(err)
         } 
-        // return res.render('index.html')
-        return res.render('admin/categories.html')
+
+        return res.render('index.html')
     }) 
 })
 

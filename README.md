@@ -297,7 +297,7 @@ router.get('xxx', (req, res, next) => {
         // data-* 用法
         const {id} = $(this).data(id)
         $.ajax({
-            url:'api/categories/delete',
+            url:'/api/categories/delete',
             method:'GET',
             data:{
                 id:id
@@ -421,7 +421,7 @@ router.get('xxx', (req, res, next) => {
      var formData = $('#add_form').serialize()
    
      $.ajax({
-       url:'api/categories/create',
+       url:'/api/categories/create',
        method:'POST',
        data:formData,
        // Content-Type 为 application/x-www-form-urlencoded
@@ -495,7 +495,7 @@ router.get('xxx', (req, res, next) => {
         var formData = $('#add_form').serialize()
       
         $.ajax({
-          url:'api/categories/create',
+          url:'/api/categories/create',
           method:'POST',
           data:formData,
           dataType:'json',
@@ -594,7 +594,7 @@ router.get('xxx', (req, res, next) => {
          //data-*
        var id = $(this).data('id')
        $.ajax({
-         url:'api/categories/getSingleData',
+         url:'/api/categories/getSingleData',
          method:'GET',
          data:{
            id:id
@@ -668,7 +668,7 @@ router.get('xxx', (req, res, next) => {
      function handleEditRender(){
        var id = $(this).data('id')
        $.ajax({
-         url:'api/categories/getSingleData',
+         url:'/api/categories/getSingleData',
          method:'GET',
          data:{
            id:id
@@ -727,7 +727,7 @@ router.get('xxx', (req, res, next) => {
      function handleSubmit(){
        var formData = $('#edit-form').serialize()
        $.ajax({
-         url:'api/categories/update',
+         url:'/api/categories/update',
          method:'POST',
          data:formData,
          dataType:'json',
@@ -787,7 +787,7 @@ router.get('xxx', (req, res, next) => {
      function handleSubmit(){
        var formData = $('#edit-form').serialize()
        $.ajax({
-         url:'api/categories/update',
+         url:'/api/categories/update',
          method:'POST',
          data:formData,
          dataType:'json',
@@ -806,3 +806,18 @@ router.get('xxx', (req, res, next) => {
 
    
 
+### 关于`Ajax`中的`url`
+
+注意到上面所有Ajax里面的url，开头都是`/`
+
+**绝对路径**url开头为一个斜杠"/"，这个斜杠说明这个请求从根目录去访问,这个是绝对路径。
+
+**相对路径**相对路径就是相对于html页面路径的路径，记住，不是相对于请求的JS文件的路径。
+
+倘若你当前的网页是`127.0.0.1:3000/admin/categories` 
+
+若url不加`/`,即`url:'api/categories/delete'`
+
+他就会去请求`127.0.0.1:3000/admin/categories/api/categories/delete`
+
+而不是`127.0.0.1:3000/api/categories/delete`（你希望他去请求的地址）

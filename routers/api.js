@@ -22,7 +22,6 @@ router.get('/api/categories',(req,res,next)=>{
 
 router.get('/api/categories/delete',(req,res,next)=>{
     const {id} = req.query
-    console.log(id)
     //防止sql注入
     pool.query('DELETE FROM `ali_cate` WHERE `cate_id`=?',[id],(err,ret)=>{
         if(err){
@@ -57,7 +56,6 @@ router.get('/api/categories/getSingleData',(req,res,next)=>{
         if(err){
             return next(err)
         }
-        
         res.send({
             success:true,
             ret
