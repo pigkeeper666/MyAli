@@ -78,9 +78,10 @@ module.exports = pool
 
 ## 服务端全局错误处理
 
-在路由挂载之后，添加以下代码
+在路由挂载之后，添加以下代码。一定要在路由挂载后面！
 
 ```javascript
+// 注意 四个参数缺一不可
 app.use((err, req, res, next) => {
   // 1. 记录错误日志
   // 2. 一些比较严重的错误，还应该通知网站负责人或是开发人员等
@@ -104,9 +105,9 @@ router.get('xxx', (req, res, next) => {
 })
 ```
 
+当`next()`函数里面有参数时，直接会进去上面那个有四个形参的方法中，进行错误处理。
 
-
-## 开始制作分类页面
+## 分类页面
 
 ### 分类列表
 
@@ -821,3 +822,255 @@ router.get('xxx', (req, res, next) => {
 他就会去请求`127.0.0.1:3000/admin/categories/api/categories/delete`
 
 而不是`127.0.0.1:3000/api/categories/delete`（你希望他去请求的地址）
+
+
+
+### Ajax中的全局错误处理
+
+再模板页`layout.html`加入。进行客户端全局错误处理
+
+```javascript
+ // 客户端全局错误处理
+    $( document ).ajaxError(function(event,jqXHR,settings) {
+      if (jqXHR.status >= 500){
+        alert('服务器内部错误，请稍候重试')
+      }
+    })
+```
+
+
+
+
+
+## 用户管理页面
+
+### 用户列表
+
+其实主要的思想和前面分类列表的思想一模一样。因而这里直接给出代码
+
+1. 客户端发送ajax 请求接口 `/api/users`
+
+   users.html
+
+   ```javascript
+    function loadList() {
+       $.ajax({
+         url: '/api/users',
+         method: 'GET',
+         success: function(result) {
+          // 渲染页面
+         }
+       })
+     }
+   ```
+
+   
+
+2. 服务端收到请求，操作数据库，返回数据
+
+   ```javascript
+   router.get('/api/users',(req,res,next)=>{
+       pool.query('SELECT * FROM `ali_admin`',(err,ret)=>{
+           if(err){
+               return next(err)
+           }
+           res.send({
+               success:true,
+               ret
+           })
+       })
+   })
+   ```
+
+   
+
+3. 客户端收到响应，完善回调
+
+   ```javascript
+   function loadList() {
+       $.ajax({
+         url: '/api/users',
+         method: 'GET',
+         success: function(result) {
+          // 渲染页面
+             var htmlStr = template('usersTemplateId',{
+                  userList: result.ret
+             })
+             $('#list_container').html(htmlStr)
+         }
+       })
+     }
+   ```
+
+
+
+### 添加用户
+
+
+
+使用了一个插件来帮我们验证表单
+
+jQuery Validation Plugin 表单验证
+
+- [官网](https://jqueryvalidation.org/)
+- [Github 仓库](https://github.com/jquery-validation/jquery-validation)
+- [菜鸟教程](http://www.runoob.com/jquery/jquery-plugin-validate.html)
+
+安装
+
+```bash
+npm i jquery-validation
+```
+
+加载
+
+```html
+<script src="jquery.js"></script>
+<script src="jquery.validate.js"></script>
+<!-- jquery-validation 默认的提示消息是英文，引入该文件让其显式中文 -->
+<script src="messages_zh.js"></script>
+```
+
+使用（包括异步验证）
+
+```javascript
+  // 该方法会自动监听表单的提交行为
+  // 当你提交表单的时候，它就根据你在表单控件中设置的验证规则，进行验证
+  // 如果验证失败，就在界面上给出提示
+  // 如果验证通过，则调用 submitHandler 方法，所以我们可以把请求服务端提交数据的代码写到 submitHandler 中
+  // 设置验证规则
+  $("#add_form").validate({
+    // 自定义规则
+    rules:{
+      admin_email:{
+        required: true,
+        // 异步验证
+        // 你输入完他就检测是否存在
+        remote:{
+          url: "/api/users/checkemail",     //后台处理程序
+          type: "GET",              		 //数据发送方式
+          // 这里不用写data，自动会把值发过去，服务端就用req.query接收
+          dataType: "json"
+        }
+      },
+      admin_pwd:{
+        required:true,
+        minlength:2,
+        maxlength:10
+      }
+    },
+    // 自定义错误提示消息
+    messages:{
+      admin_email:{
+        required:"邮箱不能为空",
+        remote:'邮箱已经存在'
+      },
+      admin_pwd:{
+        required:'密码不能为空',
+        minlength:'密码长度为2至10位',
+        maxlength:'密码长度为2至10位'
+      }
+    }
+  })
+```
+
+由于要异步验证邮箱是否存在，因而要注册该路由
+
+```javascript
+// 检查邮箱
+router.get('/api/users/checkemail',(req,res,next)=>{
+    const email = req.query.admin_email
+    pool.query('SELECT `admin_email` FROM `ali_admin` WHERE `admin_email` =?',[email],(err,ret)=>{
+        if(err){
+           return next(err)
+        }
+        // 只要检验ret数组的长度即可知道是否数据库中有该数据了
+        // 只需要返回一个布尔值
+        if(ret.length == 0){
+            // 用户名不存在
+            return res.send(true)
+        }else{
+            return res.send(false)
+        }
+    })
+})
+```
+
+> 注意：当数据库中WHERE查不到数据的时候，返回的`ret`是一个空数组，可以通过判断`ret`数组的长度来判断是否有这个数据！！
+
+做完这些后，当你输入的有问题时，就会出现红字提醒
+
+自定义错误提示文本样式
+
+```css
+form label.error {
+	color: red !important;
+}
+```
+
+
+
+接下来的思路就同添加分类一样
+
+1. 客户端监听submit事件，解析表单数据，发送Ajax请求`/api/user/create`接口
+
+   ```javascript
+    // 添加用户
+     $('#add_form').on('submit',handleAdd)
+   
+     function handleAdd(){
+       var formData = $('#add_form').serialize()
+       $.ajax({
+         url:'/api/user/create',
+         method:'POST',
+         data:formData,
+         dataType:'json',
+         success:function(result){
+           //重新渲染页面
+         }
+       })
+     }
+   ```
+
+2. 服务端响应，操作数据库，响应请求
+
+   ```javascript
+   // 添加用户
+   router.post('/api/user/create',(req,res,next)=>{
+       body = req.body
+       pool.query('INSERT INTO `ali_admin` SET `admin_email`=?, `admin_slug` = ? , `admin_nickname`= ? , `admin_pwd` = ? ',
+       [body.admin_email,body.admin_slug,body.admin_nickname,body.admin_pwd],
+       (err,ret)=>{
+           if(err){
+               return next(err)
+           }
+           res.status(200).json({
+               success:true
+           })
+       })
+   })
+   ```
+
+3. 客户端收到响应，完善回调
+
+   ```javascript
+   // 添加用户
+     $('#add_form').on('submit',handleAdd)
+   
+     function handleAdd(){
+       var formData = $('#add_form').serialize()
+       $.ajax({
+         url:'/api/user/create',
+         method:'POST',
+         data:formData,
+         dataType:'json',
+         success:function(result){
+           //重新渲染页面
+             loadList()
+         }
+       })
+     }
+   ```
+
+   
+

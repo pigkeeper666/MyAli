@@ -124,7 +124,6 @@
 </script>
 <script>
   loadList()
-
   // 加载用户列表
   function loadList() {
     $.ajax({
@@ -132,32 +131,65 @@
       method: 'GET',
       success: function(result) {
         var htmlStr = template('usersTemplateId', {
-          userList: result.message
+          userList: result.ret
         })
 
         $('#list_container').html(htmlStr)
       }
     })
   }
-
+  // 该方法会自动监听表单的提交行为
+  // 当你提交表单的时候，它就根据你在表单控件中设置的验证规则，进行验证
+  // 如果验证失败，就在界面上给出提示
+  // 如果验证通过，则调用 submitHandler 方法，所以我们可以把请求服务端提交数据的代码写到 submitHandler 中
   // 设置验证规则
   $("#add_form").validate({
+    // 自定义规则
     rules:{
       admin_email:{
         required: true,
+        // 异步验证
         remote:{
           url: "/api/users/checkemail",     //后台处理程序
           type: "GET",               //数据发送方式
+          // 这里不用写data，自动会把值发过去，服务端就用req.query接收
           dataType: "json"
         }
+      },
+      admin_pwd:{
+        required:true,
+        minlength:2,
+        maxlength:10
       }
     },
+    // 自定义错误提示消息
     messages:{
       admin_email:{
         required:"邮箱不能为空",
         remote:'邮箱已经存在'
+      },
+      admin_pwd:{
+        required:'密码不能为空',
+        minlength:'密码长度为2至10位',
+        maxlength:'密码长度为2至10位'
       }
     }
   })
+  // 添加用户
+  $('#add_form').on('submit',handleAdd)
+
+  function handleAdd(){
+    var formData = $('#add_form').serialize()
+    $.ajax({
+      url:'/api/user/create',
+      method:'POST',
+      data:formData,
+      dataType:'json',
+      success:function(result){
+        //重新渲染页面
+        loadList()
+      }
+    })
+  }
 </script>
 {{/block}}

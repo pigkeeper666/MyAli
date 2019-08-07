@@ -4,6 +4,8 @@ const pool = require(path.resolve(__dirname,"../utils/db.js"))
 
 
 const router = express.Router()
+
+// 以下是分类页面的
 //1.添加路由接口
 router.get('/api/categories',(req,res,next)=>{
 //2.操作数据库获取数据
@@ -77,4 +79,51 @@ router.post('/api/categories/update',(req,res,next)=>{
     })
 })
 
+
+//  以下是用户管理页面的
+// 渲染列表
+router.get('/api/users',(req,res,next)=>{
+    pool.query('SELECT * FROM `ali_admin`',(err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        res.send({
+            success:true,
+            ret
+        })
+    })
+})
+
+// 检查邮箱
+router.get('/api/users/checkemail',(req,res,next)=>{
+    const email = req.query.admin_email
+    pool.query('SELECT `admin_email` FROM `ali_admin` WHERE `admin_email` =?',[email],(err,ret)=>{
+        if(err){
+           return next(err)
+        }
+        // 只要检验ret数组的长度即可知道是否数据库中有该数据了
+        // 只需要返回一个布尔值
+        if(ret.length == 0){
+            // 用户名不存在
+            return res.send(true)
+        }else{
+            return res.send(false)
+        }
+    })
+})
+
+// 添加用户
+router.post('/api/user/create',(req,res,next)=>{
+    body = req.body
+    pool.query('INSERT INTO `ali_admin` SET `admin_email`=?, `admin_slug` = ? , `admin_nickname`= ? , `admin_pwd` = ? ',
+    [body.admin_email,body.admin_slug,body.admin_nickname,body.admin_pwd],
+    (err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        res.status(200).json({
+            success:true
+        })
+    })
+})
 module.exports = router

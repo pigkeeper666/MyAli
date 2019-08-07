@@ -27,6 +27,7 @@ app.use(router)
 app.use(adminRouter)
 app.use(apiRouter)
 
+// 注意 有四个参数 不能漏
 app.use((err, req, res, next) => {
     // 1. 记录错误日志
     // 2. 一些比较严重的错误，还应该通知网站负责人或是开发人员等
