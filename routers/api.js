@@ -126,4 +126,49 @@ router.post('/api/user/create',(req,res,next)=>{
         })
     })
 })
+
+// 删除用户
+router.get('/api/user/delete',(req,res,next)=>{
+    const id = req.query.id
+    pool.query('DELETE FROM `ali_admin` WHERE `admin_id` = ?',[id],(err,ret)=>{
+        if(err){
+            console.log('db')
+            return next(err)
+        }
+        res.status(200).json({
+            success:true
+        })
+    })
+
+})
+
+// 编辑用户——渲染模态框数据
+router.get('/api/user/getSingleData',(req,res,next)=>{
+    const id =req.query.id
+    pool.query('SELECT * FROM `ali_admin` WHERE `admin_id`=?',[id],(err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        res.send({
+            success:true,
+            ret
+        })
+    })
+})
+
+// 编辑用户——更新数据
+router.post('/api/user/update',(req,res,next)=>{
+    const body = req.body
+    pool.query('UPDATE `ali_admin` SET `admin_email`=?,admin_slug=?,admin_nickname=?,admin_pwd=? WHERE admin_id = ?',
+    [body.admin_email,body.admin_slug,body.admin_nickname,body.admin_pwd,body.admin_id],
+    (err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        res.status(200).json({
+            success:true
+        })
+    })
+    
+})
 module.exports = router

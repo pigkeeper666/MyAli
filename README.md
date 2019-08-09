@@ -107,7 +107,7 @@ router.get('xxx', (req, res, next) => {
 
 当`next()`函数里面有参数时，直接会进去上面那个有四个形参的方法中，进行错误处理。
 
-## 分类页面
+## 分类管理页面
 
 ### 分类列表
 
@@ -1074,3 +1074,78 @@ form label.error {
 
    
 
+### 删除用户
+
+与删除分类相同，不再赘述
+
+1. 点击删除时，发送Ajax请求，把对应的id也发送过去，接口为`/api/user/delete`
+
+   ```javascript
+     // 删除用户
+     $('#list_container').on('click','a[name=delete]',handleDelete)
+   
+     function handleDelete(){
+       if(!window.confirm('确定删除吗？'))
+         return
+       id = $(this).data('id')
+       $.ajax({
+         url:'/api/user/delete',
+         method:'GET',
+         data:{
+           id:id
+         },
+         dataType:'json',
+         success:function(result){
+           // 重新渲染页面
+           loadList()
+         }
+       })
+     }
+   ```
+
+2. 服务器接到请求，解析id，操作数据库，响应
+
+   ```javascript
+   // 删除用户
+   router.get('/api/user/delete',(req,res,next)=>{
+       const id = req.query.id
+       pool.query('DELETE FROM `ali_admin` WHERE `admin_id` = ?',[id],(err,ret)=>{
+           if(err){
+               console.log('db')
+               return next(err)
+           }
+           res.status(200).json({
+               success:true
+           })
+       })
+   })
+   ```
+
+3. 完善回调
+
+   ```javascript
+    // 删除用户
+     $('#list_container').on('click','a[name=delete]',handleDelete)
+   
+     function handleDelete(){
+       if(!window.confirm('确定删除吗？'))
+         return
+       id = $(this).data('id')
+       $.ajax({
+         url:'/api/user/delete',
+         method:'GET',
+         data:{
+           id:id
+         },
+         dataType:'json',
+         success:function(result){
+           // 重新渲染页面
+           loadList()
+         }
+       })
+     }
+   ```
+
+### 编辑用户
+
+与编辑分类一样，不再赘述

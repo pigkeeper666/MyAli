@@ -217,6 +217,7 @@ function handleAdd(){
   // serialize 会找到表单中所有的带有 name 的表单元素，提取对应的值，拼接成 key=value&key=value... 的格式数据
   var formData = $('#add_form').serialize()
 
+
   $.ajax({
     // 注意api前面的/
     url:'/api/categories/create',

@@ -91,6 +91,44 @@
     </div>
   </div>
 </div>
+
+  <!-- 修改模态框 -->
+  <div
+    class="modal fade"
+    id="editCateModalId"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="exampleModalLabel"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="exampleModalLabel">修改分类</h4>
+        </div>
+        <div class="modal-body">
+          <form id="edit-form"> </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            关闭
+          </button>
+          <button type="submit" id="editId" class="btn btn-primary">
+            修改
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 {{/block}}
 
 {{block 'script'}}
@@ -115,13 +153,67 @@
       <td>
         {% $value.admin_state %}
       </td>
-      <td class="text-center">
-        <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-        <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+      <td class="text-center" id="op">
+        <a href="javascript:;" data-id=" {% $value.admin_id %}" name="edit"class="btn btn-default btn-xs">编辑</a>
+        <a href="javascript:;" data-id=" {% $value.admin_id %}" name="delete" class="btn btn-danger btn-xs">删除</a>
       </td>
     </tr>
   {% /each %}
 </script>
+
+<!-- 模板字符串 -->
+<script type='text/html' id='modal_template'>
+  {% each data %}
+  <div class="form-group">
+    <input type="hidden" name="admin_id" value="{% $value.admin_id %}">
+    <label for="email">邮箱</label>
+    <input
+      id="email"
+      class="form-control"
+      name="admin_email"
+      type="email"
+      placeholder="邮箱"
+      value="{% $value.admin_email %}"
+    />
+  </div>
+  <div class="form-group">
+    <label for="slug">别名</label>
+    <input
+      id="slug"
+      class="form-control"
+      name="admin_slug"
+      type="text"
+      placeholder="slug"
+      value="{% $value.admin_slug %}"
+    />
+  </div>
+  <div class="form-group">
+    <label for="nickname">昵称</label>
+    <input
+      id="nickname"
+      class="form-control"
+      name="admin_nickname"
+      type="text"
+      placeholder="昵称"
+      value="{% $value.admin_nickname %}"
+    />
+  </div>
+  <div class="form-group">
+    <label for="password">密码</label>
+    <input
+      id="password"
+      class="form-control"
+      name="admin_pwd"
+      type="text"
+      placeholder="密码"
+      value="{% $value.admin_pwd %}"
+    />
+  </div>
+
+      {% /each %}
+</script>
+
+
 <script>
   loadList()
   // 加载用户列表
@@ -187,6 +279,73 @@
       dataType:'json',
       success:function(result){
         //重新渲染页面
+        loadList()
+      }
+    })
+  }
+
+  // 删除用户
+  $('#list_container').on('click','a[name=delete]',handleDelete)
+
+  function handleDelete(){
+    if(!window.confirm('确定删除吗？'))
+      return
+    id = $(this).data('id')
+    $.ajax({
+      url:'/api/user/delete',
+      method:'GET',
+      data:{
+        id:id
+      },
+      dataType:'json',
+      success:function(result){
+        // 重新渲染页面
+        loadList()
+      }
+    })
+  }
+
+  // 编辑用户
+  $('#list_container').on('click','a[name=edit]',handleEdit)
+
+  function handleEdit(){
+    var id = $(this).data('id')
+    $.ajax({
+      url:'/api/user/getSingleData',
+      method:'GET',
+      data:{
+        id:id
+      },
+      dataType:'json',
+      success:function(result){
+      
+        // 渲染模板
+        var htmlStr = template('modal_template',{
+          data:result.ret
+        })
+
+        $('#edit-form').html(htmlStr)
+        // 打开模态框 
+        $('#editCateModalId').modal('show')
+        
+      }
+    })
+  }
+
+  // 提交编辑结果
+  $('#editId').on('click',handleSubmit)
+
+  function handleSubmit(){
+    const formData = $('#edit-form').serialize()
+    $.ajax({
+      url:'/api/user/update',
+      method:'POST',
+      data:formData,
+      dataType:'json',
+      success:function(result){
+        // 关闭模态框
+        $('#editCateModalId').modal('hide')
+        // 重新渲染
         loadList()
       }
     })
