@@ -1,7 +1,7 @@
 const express = require('express')
 const path = require('path')
 const pool = require(path.resolve(__dirname,"../utils/db.js"))
-
+const md5 = require('blueimp-md5')
 
 const router = express.Router()
 
@@ -115,6 +115,8 @@ router.get('/api/users/checkemail',(req,res,next)=>{
 // 添加用户
 router.post('/api/user/create',(req,res,next)=>{
     body = req.body
+    body.admin_pwd = md5(md5(body.admin_pwd))
+    console.log(body.admin_pwd)
     pool.query('INSERT INTO `ali_admin` SET `admin_email`=?, `admin_slug` = ? , `admin_nickname`= ? , `admin_pwd` = ? ',
     [body.admin_email,body.admin_slug,body.admin_nickname,body.admin_pwd],
     (err,ret)=>{
@@ -170,5 +172,51 @@ router.post('/api/user/update',(req,res,next)=>{
         })
     })
     
+})
+
+// 登陆 解析密码
+router.post('/api/users/login',(req,res,next)=>{
+    console.log(req.body)
+    email = req.body.admin_email
+    pwd = req.body.admin_pwd
+
+    pool.query('SELECT * FROM `ali_admin` WHERE `admin_email` =?',[email],(err,ret)=>{
+        if(err){
+            return next(err)
+        }
+        if(ret.length == 0){
+            return res.json({
+                err_code:101
+                // 约定 用户名不存在
+            })
+        }  
+        md5_pwd = md5(md5(pwd))
+        console.log(md5_pwd)
+        console.log(ret[0].admin_pwd)
+        if(md5_pwd != ret[0].admin_pwd){
+            return res.json({
+                err_code:102
+                // 约定 密码错误
+            }) 
+        }else{
+            // 记录状态
+            req.session.user = ret[0]
+            return res.json({
+                err_code:103
+                // 约定 成功登陆
+            })
+        }
+        
+    })
+})
+
+// 退出
+router.get('/api/users/logout',(req,res,next)=>{
+    // 1. 清除登录状态
+  delete req.session.user
+  // 2. 记录用户的退出时间
+  
+  // 2. 跳转到登录页
+  res.redirect('/admin/login')
 })
 module.exports = router

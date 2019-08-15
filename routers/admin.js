@@ -10,5 +10,13 @@ router.get('/admin/users',(req,res,next) =>{
     return res.render('admin/users.html')
 })
 
+router.get('/admin/login',(req,res,next) =>{
+    return res.render('admin/login.html')
+})
+
+router.get('/admin/index',(req,res,next) =>{
+    return res.render('admin/index.html')
+})
+
 
 module.exports = router
